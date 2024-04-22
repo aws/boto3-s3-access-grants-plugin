@@ -1,7 +1,7 @@
 import unittest
 import mock
-import Exceptions
-from AccountIdResolverCache import AccountIdResolverCache
+import exceptions
+from account_id_resolver_cache import AccountIdResolverCache
 
 
 class TestAccountIdResolverCache(unittest.TestCase):
@@ -44,10 +44,10 @@ class TestAccountIdResolverCache(unittest.TestCase):
 
     # test to check if init method of AccountIdResolverCache throws IllegalArgumentException for invalid cache size
     def test_cache_creation_with_invalid_cache_size(self):
-        with self.assertRaises(Exceptions.IllegalArgumentException):
+        with self.assertRaises(exceptions.IllegalArgumentException):
             AccountIdResolverCache(cache_size=1000001)
 
     # test to check if init method of AccountIdResolverCache throws IllegalArgumentException for invalid ttl
     def test_cache_creation_with_invalid_ttl(self):
-        with self.assertRaises(Exceptions.IllegalArgumentException):
+        with self.assertRaises(exceptions.IllegalArgumentException):
             AccountIdResolverCache(cache_ttl=2592001)

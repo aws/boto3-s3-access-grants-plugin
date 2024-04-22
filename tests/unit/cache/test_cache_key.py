@@ -2,7 +2,7 @@ import unittest
 
 from botocore import credentials
 
-from CacheKey import CacheKey
+from cache_key import CacheKey
 
 
 class TestCacheKey(unittest.TestCase):

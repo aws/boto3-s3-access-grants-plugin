@@ -10,9 +10,3 @@ class CacheKey:
 
     def __hash__(self):
         return hash((self.credentials.access_key, self.credentials.secret_key, self.permission, self.s3_prefix))
-
-    def set_permission(self, permission):
-        self.permission = permission
-
-    def set_s3_prefix(self, s3_prefix):
-        self.s3_prefix = s3_prefix

@@ -3,7 +3,7 @@ import sys
 
 sys.path.append("..")
 sys.path.insert(0, "boto3-s3-access-grants-plugin")
-from Exceptions import IllegalArgumentException
+from exceptions import IllegalArgumentException
 
 DEFAULT_ACCOUNT_ID_CACHE_SIZE = 1000
 DEFAULT_TTL = 600
@@ -44,9 +44,9 @@ class AccountIdResolverCache:
     def resolve(self, s3_control_client, requester_account_id, s3_prefix):
         if s3_control_client is None:
             raise IllegalArgumentException("S3ControlClient cannot be null.")
-        bucket_name = self.get_bucket_name(s3_prefix)
+        bucket_name = AccountIdResolverCache.get_bucket_name(s3_prefix)
         account_id = self.account_id_resolver_cache.get(bucket_name)
         if account_id is None:
-            account_id = self.resolve_from_service(s3_control_client, requester_account_id, s3_prefix)
+            account_id = AccountIdResolverCache.resolve_from_service(s3_control_client, requester_account_id, s3_prefix)
             self.account_id_resolver_cache.set(bucket_name, account_id)
         return account_id
