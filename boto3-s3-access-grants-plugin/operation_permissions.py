@@ -14,16 +14,12 @@ _s3_operation_to_permission_map = MappingProxyType(
     "PUTOBJECT": "WRITE",
     "PUTOBJECTACL": "WRITE",
     "DELETEOBJECT": "WRITE",
-
+    "DELETEOBJECTS": "WRITE",
     "ABORTMULTIPARTUPLOAD": "WRITE",
     "CREATEMULTIPARTUPLOAD": "WRITE",
     "UPLOADPART": "WRITE",
     "COMPLETEMULTIPARTUPLOAD": "WRITE",
-    "DECRYPT": "READ",
-    "GENERATEDATAKEY": "WRITE"
-
-    # operation for DELETEOBJECTS is not supported yet because of usage of multiple prefixes
-    # "supportedAccessGrantsOperations": "WRITE"
+    "COPYOBJECT": "READWRITE"
   }
 )
 
