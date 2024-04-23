@@ -19,7 +19,8 @@ _s3_operation_to_permission_map = MappingProxyType(
     "CREATEMULTIPARTUPLOAD": "WRITE",
     "UPLOADPART": "WRITE",
     "COMPLETEMULTIPARTUPLOAD": "WRITE",
-    "COPYOBJECT": "READWRITE"
+    "COPYOBJECT": "READWRITE",
+    "HEADBUCKET": "READ"
   }
 )
 
