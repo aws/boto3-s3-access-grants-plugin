@@ -104,11 +104,10 @@ class AccessGrantsCache:
                                  cache_key=cache_key), credentials)
                 logging.debug("Successfully retrieved credentials from Access Grants service.")
             except ClientError as e:
-                logging.error("Exception occurred while fetching the credentials: " + e)
+                logging.debug("Exception occurred while fetching the credentials from Access Grants: " + e.response["Error"]["Message"])
                 if e.response["Error"]["Code"] == "AccessDenied":
                     logging.debug("Caching the Access Denied request.")
                     access_denied_cache.put_value_in_cache(cache_key, e)
-                    print(e)
                 raise e
         return credentials
 

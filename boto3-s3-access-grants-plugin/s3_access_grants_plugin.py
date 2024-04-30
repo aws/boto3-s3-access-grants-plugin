@@ -33,7 +33,8 @@ class S3AccessGrantsPlugin:
             logging.debug("Fall back enabled on the plugin! falling back to evaluate permission through policies!")
             return True
         if e.__class__.__name__ == 'UnsupportedOperationError':
-            logging.debug("Operation not supported by S3 access grants! fall back to evaluate permission through policies!")
+            logging.debug(
+                "Operation not supported by S3 access grants! fall back to evaluate permission through policies!")
             return True
         return False
 
@@ -52,7 +53,7 @@ class S3AccessGrantsPlugin:
             self.request.context['signing']['credentials'] = self.__get_value_from_cache(cache_key, requester_account_id)
         except Exception as e:
             if self.__should_fallback_to_default_credentials_for_this_case(e):
-                self.request.context['signing']['credentials'] = requester_credentials
+                pass
             else:
                 raise e
 
@@ -62,5 +63,5 @@ class S3AccessGrantsPlugin:
             logging.debug("Found cached Access Denied Exception")
             raise access_denied_exception
         return self.access_grants_cache.get_credentials(self.s3_control_client, cache_key,
-                                                                       requester_account_id,
-                                                                       self.access_denied_cache)
+                                                        requester_account_id,
+                                                        self.access_denied_cache)
