@@ -10,7 +10,6 @@ class AccessDeniedCache:
     def __init__(self, cache_size=ACCESS_DENIED_CACHE_SIZE, ttl=ACCESS_DENIED_CACHE_TTL):
         self.cache_size = cache_size
         self.ttl = ttl
-
         self.access_denied_cache = Cache(maxsize=self.cache_size, ttl=self.ttl)
 
     def put_value_in_cache(self, key, value):

@@ -1,4 +1,4 @@
-from exceptions import IllegalArgumentException
+from boto3_s3_access_grants_plugin.exceptions import IllegalArgumentException
 
 
 class CacheKey:

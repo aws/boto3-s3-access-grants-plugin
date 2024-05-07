@@ -1,18 +1,14 @@
 from cacheout import Cache
 import logging
 from botocore.exceptions import ClientError
-from account_id_resolver_cache import AccountIdResolverCache
-from cache_key import CacheKey
-import sys
-
-sys.path.append("..")
-sys.path.insert(0, "boto3-s3-access-grants-plugin")
-from exceptions import IllegalArgumentException
+from boto3_s3_access_grants_plugin.cache.account_id_resolver_cache import AccountIdResolverCache
+from boto3_s3_access_grants_plugin.cache.cache_key import CacheKey
+from boto3_s3_access_grants_plugin.exceptions import IllegalArgumentException
 
 DEFAULT_ACCESS_GRANTS_CACHE_SIZE = 30000
 MAX_LIMIT_ACCESS_GRANTS_CACHE_SIZE = 1000000
 GET_DATA_ACCESS_DURATION = 1 * 60 * 60  # 1 hour
-MAX_GET_DATA_ACCESS_DURATION = 12 * 60 * 60    # 12 hours
+MAX_GET_DATA_ACCESS_DURATION = 12 * 60 * 60  # 12 hours
 CACHE_EXPIRATION_TIME_PERCENTAGE = 90
 
 
@@ -84,7 +80,8 @@ class AccessGrantsCache:
         logging.debug("Fetching credentials from Access Grants for s3Prefix: " + cache_key.s3_prefix)
         credentials = self.__search_credentials_at_prefix_level(cache_key)
         if credentials is None and (cache_key.permission == "READ" or cache_key.permission == "WRITE"):
-            credentials = self.__search_credentials_at_prefix_level(CacheKey(permission="READWRITE", cache_key=cache_key))
+            credentials = self.__search_credentials_at_prefix_level(
+                CacheKey(permission="READWRITE", cache_key=cache_key))
         if credentials is None:
             credentials = self.__search_credentials_at_character_level(cache_key)
         if credentials is None and (cache_key.permission == "READ" or cache_key.permission == "WRITE"):
@@ -96,15 +93,17 @@ class AccessGrantsCache:
                 response = self.__get_credentials_from_service(s3_control_client, cache_key, account_id)
                 credentials = response["Credentials"]
                 matched_grant_target = response["MatchedGrantTarget"]
-                if matched_grant_target.endswith("*"):      # we do not cache object level grants
+                if matched_grant_target.endswith("*"):  # we do not cache object level grants
                     logging.debug("Caching the credentials for s3Prefix:" + matched_grant_target
-                                 + " and permission: " + cache_key.permission)
+                                  + " and permission: " + cache_key.permission)
                     self.access_grants_cache.set(
                         CacheKey(s3_prefix=AccessGrantsCache.__process_matched_target(matched_grant_target),
                                  cache_key=cache_key), credentials)
                 logging.debug("Successfully retrieved credentials from Access Grants service.")
             except ClientError as e:
-                logging.debug("Exception occurred while fetching the credentials from Access Grants: " + e.response["Error"]["Message"])
+                logging.debug(
+                    "Exception occurred while fetching the credentials from Access Grants: " + e.response["Error"][
+                        "Message"])
                 if e.response["Error"]["Code"] == "AccessDenied":
                     logging.debug("Caching the Access Denied request.")
                     access_denied_cache.put_value_in_cache(cache_key, e)
@@ -112,9 +111,7 @@ class AccessGrantsCache:
         return credentials
 
     def __put_value_in_cache(self, cache_key, value):
-        return self.access_grants_cache.set(cache_key,value)
+        return self.access_grants_cache.set(cache_key, value)
 
     def __get_value_from_cache(self, cache_key):
         return self.access_grants_cache.get(cache_key)
-
-

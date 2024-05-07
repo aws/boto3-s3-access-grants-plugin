@@ -1,9 +1,5 @@
 from cacheout import Cache
-import sys
-
-sys.path.append("..")
-sys.path.insert(0, "boto3-s3-access-grants-plugin")
-from exceptions import IllegalArgumentException
+from boto3_s3_access_grants_plugin.exceptions import IllegalArgumentException
 
 DEFAULT_ACCOUNT_ID_CACHE_SIZE = 1000
 DEFAULT_TTL = 600
