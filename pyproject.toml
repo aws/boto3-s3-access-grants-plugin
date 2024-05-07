@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "boto3_s3_access_grants_plugin"
+version = "0.0.1"
+description = "AWS S3 Access Grants plugin provides the functionality to enable S3 customers to configure S3 Access Grants as a permission layer on top of the S3 Clients."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/aws/boto3-s3-access-grants-plugin"
+Issues = "https://github.com/aws/boto3-s3-access-grants-plugin/issues"

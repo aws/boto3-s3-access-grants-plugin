@@ -1,11 +1,11 @@
 import botocore
 from botocore import session
 import logging
-from access_denied_cache import AccessDeniedCache
-from access_grants_cache import AccessGrantsCache
-from cache_key import CacheKey
-from exceptions import IllegalArgumentException
-from operation_permissions import get_permission_for_s3_operation
+from boto3_s3_access_grants_plugin.cache.access_denied_cache import AccessDeniedCache
+from boto3_s3_access_grants_plugin.cache.access_grants_cache import AccessGrantsCache
+from boto3_s3_access_grants_plugin.cache.cache_key import CacheKey
+from boto3_s3_access_grants_plugin.exceptions import IllegalArgumentException
+from boto3_s3_access_grants_plugin.operation_permissions import get_permission_for_s3_operation
 
 
 class S3AccessGrantsPlugin:
