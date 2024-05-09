@@ -3,6 +3,7 @@ import mock
 from botocore.exceptions import ClientError
 from boto3_s3_access_grants_plugin.cache.bucket_region_resolver_cache import BucketRegionResolverCache
 
+
 class TestBucketRegionResolverCache(unittest.TestCase):
     s3_client = mock.Mock()
 
@@ -31,10 +32,10 @@ class TestBucketRegionResolverCache(unittest.TestCase):
         self.s3_client.head_bucket.side_effect = ClientError(
             operation_name='head_bucket',
             error_response={
-                'ResponseMetaData': {
-                    'HTTPStatusCode': 301, 
+                'ResponseMetadata': {
+                    'HTTPStatusCode': 301,
                     'HTTPHeaders': {
-                        'x-amz-bucket-region': expectedRegion, # expected region header
+                        'x-amz-bucket-region': expectedRegion,  # expected region header
                     }
                 }
             }
@@ -50,8 +51,8 @@ class TestBucketRegionResolverCache(unittest.TestCase):
                 'Error': {
                     'Message': 'Redirect'
                 },
-                'ResponseMetaData': {
-                    'HTTPStatusCode': 301, 
+                'ResponseMetadata': {
+                    'HTTPStatusCode': 301,
                     'HTTPHeaders': {
                         'x-amz-bucket-region': None,
                     }
@@ -67,12 +68,12 @@ class TestBucketRegionResolverCache(unittest.TestCase):
         cache = BucketRegionResolverCache()
         self.s3_client.head_bucket.side_effect = ClientError(
             operation_name='head_bucket',
-            error_response= {
+            error_response={
                 'Error': {
                     'Message': 'Bucket does not exist'
                 },
-                'ResponseMetaData': {
-                    'HTTPStatusCode': 404, 
+                'ResponseMetadata': {
+                    'HTTPStatusCode': 404,
                     'HTTPHeaders': {}
                 }
             }

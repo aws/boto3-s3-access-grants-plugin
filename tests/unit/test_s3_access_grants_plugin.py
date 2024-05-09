@@ -3,9 +3,9 @@ from datetime import datetime
 from unittest.mock import patch
 import mock
 from botocore import credentials
-from cache_key import CacheKey
-from exceptions import UnsupportedOperationError
-from s3_access_grants_plugin import S3AccessGrantsPlugin
+from boto3_s3_access_grants_plugin.cache.cache_key import CacheKey
+from boto3_s3_access_grants_plugin.exceptions import UnsupportedOperationError
+from boto3_s3_access_grants_plugin.s3_access_grants_plugin import S3AccessGrantsPlugin
 
 
 class TestS3AccessGrantsPlugin(unittest.TestCase):
@@ -28,9 +28,10 @@ class TestS3AccessGrantsPlugin(unittest.TestCase):
         e = mock.Mock()
         self.assertTrue(plugin._S3AccessGrantsPlugin__should_fallback_to_default_credentials_for_this_case(e))
 
-    @patch('s3_access_grants_plugin.AccessGrantsCache.get_credentials')
+    @patch('boto3_s3_access_grants_plugin.s3_access_grants_plugin.AccessGrantsCache.get_credentials')
     def test_get_value_from_cache(self, get_credentials_mock):
         s3_client = mock.Mock()
+        s3_control_client = mock.Mock()
         requester_credentials = credentials.Credentials(access_key="access_key", secret_key="secret_key", token="token")
         cache_key = CacheKey(requester_credentials, 'READ', "s3://bucket/name")
         access_grants_credentials = {
@@ -43,7 +44,7 @@ class TestS3AccessGrantsPlugin(unittest.TestCase):
         }
         get_credentials_mock.return_value = access_grants_credentials
         plugin = S3AccessGrantsPlugin(s3_client, False)
-        self.assertEqual(plugin._S3AccessGrantsPlugin__get_value_from_cache(cache_key, '123456789012'), access_grants_credentials)
+        self.assertEqual(plugin._S3AccessGrantsPlugin__get_value_from_cache(cache_key, s3_control_client, '123456789012'), access_grants_credentials)
 
     def test_get_common_prefix_for_multiple_prefixes(self):
         s3_client = mock.Mock()
@@ -57,6 +58,14 @@ class TestS3AccessGrantsPlugin(unittest.TestCase):
         self.assertEqual(plugin._S3AccessGrantsPlugin__get_common_prefix_for_multiple_prefixes(prefix_list),
                          '/')
         prefix_list = ["ABC/A/B/C/log.txt", "ABC/B/A/C/log.txt", "ABC/C/A/B/log.txt", "XYZ/X/Y/Y/log.txt", "XYZ/Y/X/Z/log.txt", "XYZ/Z/X/Y/log.txt"]
-        self.assertEqual(plugin._S3AccessGrantsPlugin__get_common_prefix_for_multiple_prefixes(prefix_list),
-                         '/')
+        self.assertEqual(plugin._S3AccessGrantsPlugin__get_common_prefix_for_multiple_prefixes(prefix_list),'/')
+
+    @patch('boto3_s3_access_grants_plugin.s3_access_grants_plugin.BucketRegionResolverCache.resolve')
+    def test_get_s3_control_client_for_region(self, mock_resolve):
+        s3_client = mock.Mock()
+        plugin = S3AccessGrantsPlugin(s3_client, False)
+        mock_resolve.return_value = 'us-east-1'
+        plugin._S3AccessGrantsPlugin__get_s3_control_client_for_region("bucket-name")
+        self.assertTrue(plugin.client_dict.__contains__('us-east-1'))
+
 

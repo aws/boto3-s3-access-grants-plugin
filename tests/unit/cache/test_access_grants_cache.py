@@ -1,11 +1,11 @@
 import time
 import unittest
 from datetime import datetime
-import exceptions
+from boto3_s3_access_grants_plugin.exceptions import IllegalArgumentException
 from botocore import credentials
-from access_denied_cache import AccessDeniedCache
-from access_grants_cache import AccessGrantsCache
-from cache_key import CacheKey
+from boto3_s3_access_grants_plugin.cache.access_denied_cache import AccessDeniedCache
+from boto3_s3_access_grants_plugin.cache.access_grants_cache import AccessGrantsCache
+from boto3_s3_access_grants_plugin.cache.cache_key import CacheKey
 import mock
 
 
@@ -72,7 +72,7 @@ class TestAccessGrantsCache(unittest.TestCase):
                                                          self.requester_account_id, self.access_denied_cache)
         self.assertEqual(value, self.access_grants_credentials)
 
-    @mock.patch('access_grants_cache.AccessGrantsCache._AccessGrantsCache__get_credentials_from_service')
+    @mock.patch('boto3_s3_access_grants_plugin.cache.access_grants_cache.AccessGrantsCache._AccessGrantsCache__get_credentials_from_service')
     def test_cache_miss_for_write_grant_for_a_read_request(self, mocked_get_credentials_from_service):
         credentials_1 = credentials.Credentials(access_key="access_key", secret_key="secret_key", token="token")
         key_1 = CacheKey(credentials_1, 'WRITE', "s3://bucket-name")
@@ -85,7 +85,7 @@ class TestAccessGrantsCache(unittest.TestCase):
                                                  self.requester_account_id, self.access_denied_cache)
         mocked_get_credentials_from_service.assert_called_once()
 
-    @mock.patch('access_grants_cache.AccessGrantsCache._AccessGrantsCache__get_credentials_from_service')
+    @mock.patch('boto3_s3_access_grants_plugin.cache.access_grants_cache.AccessGrantsCache._AccessGrantsCache__get_credentials_from_service')
     def test_cache_miss_for_cache_key_with_different_prefix(self, mocked_get_credentials_from_service):
         credentials_1 = credentials.Credentials(access_key="access_key", secret_key="secret_key", token="token")
         key_1 = CacheKey(credentials_1, 'READ', "s3://bucket-name/prefixA")
@@ -189,11 +189,11 @@ class TestAccessGrantsCache(unittest.TestCase):
                          "s3://bucket/foo*")
 
     def test_cache_creation_with_invalid_cache_size(self):
-        with self.assertRaises(exceptions.IllegalArgumentException):
+        with self.assertRaises(IllegalArgumentException):
             AccessGrantsCache(cache_size=1000001)
 
     def test_cache_creation_with_invalid_duration(self):
-        with self.assertRaises(exceptions.IllegalArgumentException):
+        with self.assertRaises(IllegalArgumentException):
             AccessGrantsCache(duration=4099000)
 
     def test_cache_ttl(self):

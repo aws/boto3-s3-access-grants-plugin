@@ -1,7 +1,7 @@
 import unittest
 import mock
-import exceptions
-from account_id_resolver_cache import AccountIdResolverCache
+from boto3_s3_access_grants_plugin.exceptions import IllegalArgumentException
+from boto3_s3_access_grants_plugin.cache.account_id_resolver_cache import AccountIdResolverCache
 
 
 class TestAccountIdResolverCache(unittest.TestCase):
@@ -18,7 +18,7 @@ class TestAccountIdResolverCache(unittest.TestCase):
                          "987654321098")
 
     # test to check if service call is made only once for every resolve call with the same bucket name
-    @mock.patch('account_id_resolver_cache.AccountIdResolverCache._AccountIdResolverCache__resolve_from_service')
+    @mock.patch('boto3_s3_access_grants_plugin.cache.account_id_resolver_cache.AccountIdResolverCache._AccountIdResolverCache__resolve_from_service')
     def test_count_resolve_method(self, mocked_resolve_from_service):
         cache = AccountIdResolverCache()
         cache.resolve(self.mock_s3_control_client, "123456789012", "s3://bucketName/prefixA")
@@ -43,10 +43,10 @@ class TestAccountIdResolverCache(unittest.TestCase):
 
     # test to check if init method of AccountIdResolverCache throws IllegalArgumentException for invalid cache size
     def test_cache_creation_with_invalid_cache_size(self):
-        with self.assertRaises(exceptions.IllegalArgumentException):
+        with self.assertRaises(IllegalArgumentException):
             AccountIdResolverCache(cache_size=1000001)
 
     # test to check if init method of AccountIdResolverCache throws IllegalArgumentException for invalid ttl
     def test_cache_creation_with_invalid_ttl(self):
-        with self.assertRaises(exceptions.IllegalArgumentException):
+        with self.assertRaises(IllegalArgumentException):
             AccountIdResolverCache(cache_ttl=2592001)

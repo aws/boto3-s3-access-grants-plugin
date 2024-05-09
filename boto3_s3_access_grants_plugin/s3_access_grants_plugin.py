@@ -6,15 +6,18 @@ from boto3_s3_access_grants_plugin.cache.access_grants_cache import AccessGrants
 from boto3_s3_access_grants_plugin.cache.cache_key import CacheKey
 from boto3_s3_access_grants_plugin.exceptions import IllegalArgumentException
 from boto3_s3_access_grants_plugin.operation_permissions import get_permission_for_s3_operation
+from boto3_s3_access_grants_plugin.cache.bucket_region_resolver_cache import BucketRegionResolverCache
 
 
 class S3AccessGrantsPlugin:
     session = botocore.session.get_session()
     request = None
-    s3_control_client = session.create_client('s3control')
     sts_client = session.create_client('sts')
     access_denied_cache = AccessDeniedCache()
     access_grants_cache = AccessGrantsCache()
+    bucket_region_cache = BucketRegionResolverCache()
+    client_dict = {}
+    internal_s3_client = session.create_client('s3')
 
     def __init__(self, s3_client, fallback_enabled):
         self.s3_client = s3_client
@@ -33,7 +36,9 @@ class S3AccessGrantsPlugin:
             cache_key = CacheKey(permission=permission, credentials=requester_credentials,
                                  s3_prefix="s3://" + s3_prefix)
             requester_account_id = self.sts_client.get_caller_identity()['Account']
-            request.context['signing']['credentials'] = self.__get_value_from_cache(cache_key,
+            bucket_name = request.context['input_params']['Bucket']
+            s3_control_client = self.__get_s3_control_client_for_region(bucket_name)
+            request.context['signing']['credentials'] = self.__get_value_from_cache(cache_key, s3_control_client,
                                                                                     requester_account_id)
         except Exception as e:
             if self.__should_fallback_to_default_credentials_for_this_case(e):
@@ -100,11 +105,19 @@ class S3AccessGrantsPlugin:
                     break
         return "/" + new_common_ancestor
 
-    def __get_value_from_cache(self, cache_key, requester_account_id):
+    def __get_s3_control_client_for_region(self, bucket_name):
+        region = self.bucket_region_cache.resolve(self.internal_s3_client, bucket_name)
+        s3_control_client = self.client_dict.get(region)
+        if s3_control_client is None:
+            s3_control_client = self.session.create_client('s3control', region_name='us-west-2')
+            self.client_dict[region] = s3_control_client
+        return s3_control_client
+
+    def __get_value_from_cache(self, cache_key, s3_control_client, requester_account_id):
         access_denied_exception = self.access_denied_cache.get_value_from_cache(cache_key)
         if access_denied_exception is not None:
             logging.debug("Found cached Access Denied Exception.")
             raise access_denied_exception
-        return self.access_grants_cache.get_credentials(self.s3_control_client, cache_key,
+        return self.access_grants_cache.get_credentials(s3_control_client, cache_key,
                                                         requester_account_id,
                                                         self.access_denied_cache)
