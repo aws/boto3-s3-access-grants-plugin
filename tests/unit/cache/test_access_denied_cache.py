@@ -1,8 +1,8 @@
 import unittest
 from botocore import credentials
 from botocore.exceptions import ClientError
-from access_denied_cache import AccessDeniedCache
-from cache_key import CacheKey
+from boto3_s3_access_grants_plugin.cache.access_denied_cache import AccessDeniedCache
+from boto3_s3_access_grants_plugin.cache.cache_key import CacheKey
 
 
 class TestAccessDeniedCache(unittest.TestCase):
