@@ -109,7 +109,7 @@ class S3AccessGrantsPlugin:
         region = self.bucket_region_cache.resolve(self.internal_s3_client, bucket_name)
         s3_control_client = self.client_dict.get(region)
         if s3_control_client is None:
-            s3_control_client = self.session.create_client('s3control', region_name='us-west-2')
+            s3_control_client = self.session.create_client('s3control', region_name=region)
             self.client_dict[region] = s3_control_client
         return s3_control_client
 
