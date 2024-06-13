@@ -85,7 +85,9 @@ class S3AccessGrantsPlugin:
 
     @staticmethod
     def __get_common_prefix_for_multiple_prefixes(prefixes):
-        common_ancestor = prefixes[0]
+        if len(prefixes) == 0:
+            return '/'
+        common_ancestor = first_key = prefixes[0]
         last_prefix = ''
         for prefix in prefixes[1:]:
             while common_ancestor != "":
@@ -105,6 +107,8 @@ class S3AccessGrantsPlugin:
                     new_common_ancestor = common_ancestor + "/" + last_prefix
                 else:
                     break
+        if new_common_ancestor == first_key+"/":
+            return "/" + first_key
         return "/" + new_common_ancestor
 
     def __get_s3_control_client_for_region(self, bucket_name):
