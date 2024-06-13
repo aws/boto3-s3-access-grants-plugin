@@ -7,7 +7,7 @@ from botocore.exceptions import ClientError
 
 class SetupIntegrationTests:
     test_account = "527802564711"
-    iam_role_name = 'iam-integ-test-role-for-boto3-plugin'
+    iam_role_name = 'aws-s3-access-grants-sdk-plugin-integration-role'
     iam_client = boto3.client('iam')
     region = 'us-west-1'
     s3_client = boto3.client('s3', region_name=region)
@@ -65,15 +65,6 @@ class SetupIntegrationTests:
                     ],
                     "Resource": [
                         "arn:aws:s3:::access-grants-boto3-test-bucket/*"
-                    ]
-                },
-                {
-                    "Effect": "Allow",
-                    "Action": [
-                        "s3:ListBucket"
-                    ],
-                    "Resource": [
-                        "arn:aws:s3:::access-grants-boto3-test-bucket"
                     ]
                 },
                 {
@@ -221,7 +212,6 @@ class SetupIntegrationTests:
         self.delete_bucket(self.unregistered_bucket_name)
         logging.debug("Deleted S3 resources.")
         self.detach_role_policy(self.iam_role_name, self.iam_policy_arn)
-        self.delete_iam_role(self.iam_role_name)
         self.delete_iam_policy(self.iam_policy_arn)
         logging.debug("Deleted IAM resources.")
 
@@ -269,8 +259,3 @@ class SetupIntegrationTests:
         except ClientError as e:
             logging.debug("Error while deleting IAM policy." + e.response['Error']['Message'])
 
-    def delete_iam_role(self, role_name):
-        try:
-            self.iam_client.delete_role(RoleName=role_name)
-        except ClientError as e:
-            logging.debug("Error while deleting IAM role." + e.response['Error']['Message'])

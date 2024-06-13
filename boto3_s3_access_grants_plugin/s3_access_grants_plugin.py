@@ -76,7 +76,7 @@ class S3AccessGrantsPlugin:
         else:
             s3_prefix = request.context['input_params']['Bucket']
             try:
-                s3_prefix = s3_prefix + "/" + request.context['input_params']['Prefix']
+                s3_prefix = s3_prefix + "/" + request.context['input_params']['Key']
             except KeyError:
                 pass
         return s3_prefix
