@@ -108,4 +108,3 @@ class TestPlugin(unittest.TestCase):
             ]
         })
         self.assertEqual(response['ResponseMetadata']['HTTPStatusCode'], 200)
-
