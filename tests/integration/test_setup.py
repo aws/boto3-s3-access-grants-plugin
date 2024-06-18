@@ -1,5 +1,7 @@
 import json
 import logging
+import random
+import string
 import time
 import boto3
 from botocore.exceptions import ClientError
@@ -12,8 +14,8 @@ class SetupIntegrationTests:
     region = 'us-west-1'
     s3_client = boto3.client('s3', region_name=region)
     s3_control_client = boto3.client('s3control', region_name=region)
-    registered_bucket_name = 'boto3-plugin-test-bucket'
-    unregistered_bucket_name = 'unregistered-boto3-plugin-test-bucket'
+    registered_bucket_name = 'boto3-plugin-test-bucket-'+''.join(random.choices(string.ascii_lowercase, k=10))
+    unregistered_bucket_name = 'unregistered-boto3-plugin-test-bucket-'+''.join(random.choices(string.ascii_lowercase, k=10))
     content = "s3 AG content"
     TEST_LOCATION_1 = "PrefixA/"
     TEST_LOCATION_2 = "PrefixA/PrefixB/"
