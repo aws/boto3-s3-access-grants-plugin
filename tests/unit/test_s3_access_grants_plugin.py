@@ -59,6 +59,12 @@ class TestS3AccessGrantsPlugin(unittest.TestCase):
                          '/')
         prefix_list = ["ABC/A/B/C/log.txt", "ABC/B/A/C/log.txt", "ABC/C/A/B/log.txt", "XYZ/X/Y/Y/log.txt", "XYZ/Y/X/Z/log.txt", "XYZ/Z/X/Y/log.txt"]
         self.assertEqual(plugin._S3AccessGrantsPlugin__get_common_prefix_for_multiple_prefixes(prefix_list),'/')
+        prefix_list = []
+        self.assertEqual(plugin._S3AccessGrantsPlugin__get_common_prefix_for_multiple_prefixes(prefix_list), '/')
+        prefix_list = ["ABC/A/B/C/log.txt"]
+        self.assertEqual(plugin._S3AccessGrantsPlugin__get_common_prefix_for_multiple_prefixes(prefix_list), '/ABC/A/B/C/log.txt')
+        prefix_list = ["ABC/A/B/C/log.txt","ABC/A/B/C/log.txt"]
+        self.assertEqual(plugin._S3AccessGrantsPlugin__get_common_prefix_for_multiple_prefixes(prefix_list), '/ABC/A/B/C/log.txt')
 
     @patch('boto3_s3_access_grants_plugin.s3_access_grants_plugin.BucketRegionResolverCache.resolve')
     def test_get_s3_control_client_for_region(self, mock_resolve):

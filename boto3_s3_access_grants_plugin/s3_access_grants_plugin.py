@@ -47,12 +47,12 @@ class S3AccessGrantsPlugin:
                 raise e
 
     def __should_fallback_to_default_credentials_for_this_case(self, e):
-        if self.fallback_enabled:
-            logging.debug("Fall back enabled on the plugin. Falling back to evaluate permission through policies.")
-            return True
         if e.__class__.__name__ == 'UnsupportedOperationError':
             logging.debug(
                 "Operation not supported by S3 access grants. Falling back to evaluate permission through policies.")
+            return True
+        if self.fallback_enabled:
+            logging.debug("Fall back enabled on the plugin. Falling back to evaluate permission through policies.")
             return True
         return False
 
@@ -69,21 +69,25 @@ class S3AccessGrantsPlugin:
             pass
         elif operation_name == 'CopyObject':
             destination_bucket_name = request.context['input_params']['Bucket']
-            source_bucket = request.context['s3_redirect']['params']['CopySource'].split('/')[0]
+            source_split = request.context['s3_redirect']['params']['CopySource'].split('/', 1)
+            source_bucket = source_split[0]
             if source_bucket != destination_bucket_name:
                 raise IllegalArgumentException("Source bucket and destination bucket must be the same.")
-            pass
+            prefix_list = [source_split[1], request.context['input_params']['Key']]
+            s3_prefix = destination_bucket_name + S3AccessGrantsPlugin.__get_common_prefix_for_multiple_prefixes(prefix_list)
         else:
             s3_prefix = request.context['input_params']['Bucket']
             try:
-                s3_prefix = s3_prefix + "/" + request.context['input_params']['Prefix']
+                s3_prefix = s3_prefix + "/" + request.context['input_params']['Key']
             except KeyError:
                 pass
         return s3_prefix
 
     @staticmethod
     def __get_common_prefix_for_multiple_prefixes(prefixes):
-        common_ancestor = prefixes[0]
+        if len(prefixes) == 0:
+            return '/'
+        common_ancestor = first_key = prefixes[0]
         last_prefix = ''
         for prefix in prefixes[1:]:
             while common_ancestor != "":
@@ -103,6 +107,8 @@ class S3AccessGrantsPlugin:
                     new_common_ancestor = common_ancestor + "/" + last_prefix
                 else:
                     break
+        if new_common_ancestor == first_key+"/":
+            return "/" + first_key
         return "/" + new_common_ancestor
 
     def __get_s3_control_client_for_region(self, bucket_name):

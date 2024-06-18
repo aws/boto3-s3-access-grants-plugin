@@ -20,7 +20,8 @@ _s3_operation_to_permission_map = MappingProxyType(
         "UPLOADPART": "WRITE",
         "COMPLETEMULTIPARTUPLOAD": "WRITE",
         "COPYOBJECT": "READWRITE",
-        "HEADBUCKET": "READ"
+        "HEADBUCKET": "READ",
+        "GETOBJECTATTRIBUTES": "READ"
     }
 )
 
