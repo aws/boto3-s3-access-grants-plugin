@@ -1,9 +1,9 @@
 from cacheout import Cache
 import logging
 from botocore.exceptions import ClientError
-from boto3_s3_access_grants_plugin.cache.account_id_resolver_cache import AccountIdResolverCache
-from boto3_s3_access_grants_plugin.cache.cache_key import CacheKey
-from boto3_s3_access_grants_plugin.exceptions import IllegalArgumentException
+from aws_s3_access_grants_boto3_plugin.cache.account_id_resolver_cache import AccountIdResolverCache
+from aws_s3_access_grants_boto3_plugin.cache.cache_key import CacheKey
+from aws_s3_access_grants_boto3_plugin.exceptions import IllegalArgumentException
 
 DEFAULT_ACCESS_GRANTS_CACHE_SIZE = 30000
 MAX_LIMIT_ACCESS_GRANTS_CACHE_SIZE = 1000000

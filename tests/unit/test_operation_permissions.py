@@ -1,7 +1,7 @@
 import unittest
 
-from boto3_s3_access_grants_plugin.operation_permissions import get_permission_for_s3_operation
-from boto3_s3_access_grants_plugin.exceptions import UnsupportedOperationError
+from aws_s3_access_grants_boto3_plugin.operation_permissions import get_permission_for_s3_operation
+from aws_s3_access_grants_boto3_plugin.exceptions import UnsupportedOperationError
 
 
 class TestOperationPermissionMapper(unittest.TestCase):

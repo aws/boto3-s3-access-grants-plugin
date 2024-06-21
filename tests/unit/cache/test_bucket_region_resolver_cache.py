@@ -1,7 +1,7 @@
 import unittest
 import mock
 from botocore.exceptions import ClientError
-from boto3_s3_access_grants_plugin.cache.bucket_region_resolver_cache import BucketRegionResolverCache
+from aws_s3_access_grants_boto3_plugin.cache.bucket_region_resolver_cache import BucketRegionResolverCache
 
 
 class TestBucketRegionResolverCache(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestBucketRegionResolverCache(unittest.TestCase):
         self.assertEqual(cache.resolve(self.s3_client, 'fakebucket'), expectedRegion)
         self.__reset_mock()
 
-    @mock.patch('boto3_s3_access_grants_plugin.cache.bucket_region_resolver_cache.BucketRegionResolverCache._BucketRegionResolverCache__resolve_from_service')
+    @mock.patch('aws_s3_access_grants_boto3_plugin.cache.bucket_region_resolver_cache.BucketRegionResolverCache._BucketRegionResolverCache__resolve_from_service')
     def test_resolve_caches_response(self, mocked_resolve_from_service):
         cache = BucketRegionResolverCache()
         cache.resolve(self.s3_client, 'fakebucket')

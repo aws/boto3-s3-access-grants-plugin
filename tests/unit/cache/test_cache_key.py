@@ -1,6 +1,6 @@
 import unittest
 from botocore import credentials
-from boto3_s3_access_grants_plugin.cache.cache_key import CacheKey
+from aws_s3_access_grants_boto3_plugin.cache.cache_key import CacheKey
 
 
 class TestCacheKey(unittest.TestCase):

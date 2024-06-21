@@ -1,7 +1,7 @@
 import unittest
 import mock
-from boto3_s3_access_grants_plugin.exceptions import IllegalArgumentException
-from boto3_s3_access_grants_plugin.cache.account_id_resolver_cache import AccountIdResolverCache
+from aws_s3_access_grants_boto3_plugin.exceptions import IllegalArgumentException
+from aws_s3_access_grants_boto3_plugin.cache.account_id_resolver_cache import AccountIdResolverCache
 
 
 class TestAccountIdResolverCache(unittest.TestCase):
@@ -18,7 +18,7 @@ class TestAccountIdResolverCache(unittest.TestCase):
                          "987654321098")
 
     # test to check if service call is made only once for every resolve call with the same bucket name
-    @mock.patch('boto3_s3_access_grants_plugin.cache.account_id_resolver_cache.AccountIdResolverCache._AccountIdResolverCache__resolve_from_service')
+    @mock.patch('aws_s3_access_grants_boto3_plugin.cache.account_id_resolver_cache.AccountIdResolverCache._AccountIdResolverCache__resolve_from_service')
     def test_count_resolve_method(self, mocked_resolve_from_service):
         cache = AccountIdResolverCache()
         cache.resolve(self.mock_s3_control_client, "123456789012", "s3://bucketName/prefixA")
