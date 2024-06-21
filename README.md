@@ -11,6 +11,10 @@ Run this command to install the plugin.
 ``` 
 pip install aws-s3-access-grants-boto3-plugin==<Latest_Version>
 ```
+The plugin uses cacheout library for caching. So you need to install that as well.
+```
+pip install cacheout
+```
 
 ### Using the plugin
 1. Create your S3 Client.
