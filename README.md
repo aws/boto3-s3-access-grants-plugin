@@ -9,7 +9,7 @@ S3 Access Grants is a feature from S3 that allows its customers to configure fin
 ### Installing the plugin 
 Run this command to install the plugin.
 ``` 
-pip install "aws-s3-access-grants-boto-plugin==<Latest_Version>"
+pip install "aws-s3-access-grants-boto3-plugin==<Latest_Version>"
 ```
 
 ### Using the plugin
