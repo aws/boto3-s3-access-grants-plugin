@@ -1,5 +1,5 @@
 from types import MappingProxyType
-from boto3_s3_access_grants_plugin.exceptions import UnsupportedOperationError
+from aws_s3_access_grants_boto_plugin.exceptions import UnsupportedOperationError
 
 _s3_operation_to_permission_map = MappingProxyType(
     {

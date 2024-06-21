@@ -1,6 +1,6 @@
 import botocore.session
 from botocore.exceptions import ClientError
-from s3_access_grants_plugin import S3AccessGrantsPlugin
+from aws_s3_access_grants_boto_plugin.s3_access_grants_plugin import S3AccessGrantsPlugin
 from tests.integration.test_setup import SetupIntegrationTests
 import unittest
 

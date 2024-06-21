@@ -3,9 +3,9 @@ from datetime import datetime
 from unittest.mock import patch
 import mock
 from botocore import credentials
-from boto3_s3_access_grants_plugin.cache.cache_key import CacheKey
-from boto3_s3_access_grants_plugin.exceptions import UnsupportedOperationError
-from boto3_s3_access_grants_plugin.s3_access_grants_plugin import S3AccessGrantsPlugin
+from aws_s3_access_grants_boto_plugin.cache.cache_key import CacheKey
+from aws_s3_access_grants_boto_plugin.exceptions import UnsupportedOperationError
+from aws_s3_access_grants_boto_plugin.s3_access_grants_plugin import S3AccessGrantsPlugin
 
 
 class TestS3AccessGrantsPlugin(unittest.TestCase):
@@ -28,7 +28,7 @@ class TestS3AccessGrantsPlugin(unittest.TestCase):
         e = mock.Mock()
         self.assertTrue(plugin._S3AccessGrantsPlugin__should_fallback_to_default_credentials_for_this_case(e))
 
-    @patch('boto3_s3_access_grants_plugin.s3_access_grants_plugin.AccessGrantsCache.get_credentials')
+    @patch('aws_s3_access_grants_boto_plugin.s3_access_grants_plugin.AccessGrantsCache.get_credentials')
     def test_get_value_from_cache(self, get_credentials_mock):
         s3_client = mock.Mock()
         s3_control_client = mock.Mock()
@@ -66,7 +66,7 @@ class TestS3AccessGrantsPlugin(unittest.TestCase):
         prefix_list = ["ABC/A/B/C/log.txt","ABC/A/B/C/log.txt"]
         self.assertEqual(plugin._S3AccessGrantsPlugin__get_common_prefix_for_multiple_prefixes(prefix_list), '/ABC/A/B/C/log.txt')
 
-    @patch('boto3_s3_access_grants_plugin.s3_access_grants_plugin.BucketRegionResolverCache.resolve')
+    @patch('aws_s3_access_grants_boto_plugin.s3_access_grants_plugin.BucketRegionResolverCache.resolve')
     def test_get_s3_control_client_for_region(self, mock_resolve):
         s3_client = mock.Mock()
         plugin = S3AccessGrantsPlugin(s3_client, False)

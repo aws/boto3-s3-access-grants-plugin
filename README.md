@@ -9,7 +9,7 @@ S3 Access Grants is a feature from S3 that allows its customers to configure fin
 ### Installing the plugin 
 Run this command to install the plugin.
 ``` 
-python3 -m pip install "s3-access-grants-plugin==<Latest_Version>"
+pip install "aws-s3-access-grants-boto-plugin==<Latest_Version>"
 ```
 
 ### Using the plugin
@@ -18,8 +18,11 @@ python3 -m pip install "s3-access-grants-plugin==<Latest_Version>"
 3. Register the plugin.
 
 ```
+import botocore.session
+from s3_access_grants_plugin.s3_access_grants_plugin import S3AccessGrantsPlugin
+
 session = botocore.session.get_session()
-s3_client = newsession.create_client('s3')
+s3_client = session.create_client('s3')
 plugin = S3AccessGrantsPlugin(s3_client, fallback_enabled=True)
 plugin.register()
 ```
