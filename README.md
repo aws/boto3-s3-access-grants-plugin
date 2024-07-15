@@ -33,7 +33,7 @@ fallback_enabled takes in a boolean value. This option decides if we will fall b
 ### Notes
 * The plugin supports delete_objects API and copy_object API which S3 Access Grants does not implicitly support. For these APIs we get the common prefix of all the object keys and find their common ancestor. If you  have a grant present on the common ancestor, you will get Access Grants credentials based on that grant.
 For copy_object API the source and destination buckets should be same, since a grant cannot give access to multiple buckets.
-* Currently, the plugin only supports IAM identities.
+* Currently, the plugin grants access to Amazon S3 bucket, prefix, or object via IAM principals only.
 
 ---
 ### Contributions
