@@ -25,28 +25,29 @@ class S3AccessGrantsPlugin:
 
     def register(self):
         self.s3_client.meta.events.register(
-            'before-sign.s3', self.__get_access_grants_credentials
+            'before-sign.s3', self._get_access_grants_credentials
         )
 
-    def __get_access_grants_credentials(self, operation_name, request, **kwargs):
+    def _get_access_grants_credentials(self, operation_name, request, **kwargs):
         requester_credentials = self.s3_client._get_credentials()
         try:
             permission = get_permission_for_s3_operation(operation_name)
-            s3_prefix = S3AccessGrantsPlugin.__get_s3_prefix(operation_name, request)
+            s3_prefix = self._get_s3_prefix(operation_name, request)
             cache_key = CacheKey(permission=permission, credentials=requester_credentials,
                                  s3_prefix="s3://" + s3_prefix)
+            print("In-plugin"+self.sts_client.get_caller_identity()['Arn'])
             requester_account_id = self.sts_client.get_caller_identity()['Account']
             bucket_name = request.context['input_params']['Bucket']
-            s3_control_client = self.__get_s3_control_client_for_region(bucket_name)
-            request.context['signing']['credentials'] = self.__get_value_from_cache(cache_key, s3_control_client,
+            s3_control_client = self._get_s3_control_client_for_region(bucket_name)
+            request.context['signing']['credentials'] = self._get_value_from_cache(cache_key, s3_control_client,
                                                                                     requester_account_id)
         except Exception as e:
-            if self.__should_fallback_to_default_credentials_for_this_case(e):
+            if self._should_fallback_to_default_credentials_for_this_case(e):
                 pass
             else:
                 raise e
 
-    def __should_fallback_to_default_credentials_for_this_case(self, e):
+    def _should_fallback_to_default_credentials_for_this_case(self, e):
         if e.__class__.__name__ == 'UnsupportedOperationError':
             logging.debug(
                 "Operation not supported by S3 access grants. Falling back to evaluate permission through policies.")
@@ -56,16 +57,14 @@ class S3AccessGrantsPlugin:
             return True
         return False
 
-    @staticmethod
-    def __get_s3_prefix(operation_name, request):
-        s3_prefix = None
+    def _get_s3_prefix(self, operation_name, request):
         if operation_name == 'DeleteObjects':
             bucket_name = request.context['input_params']['Bucket']
             prefixes = request.context['input_params']['Delete']['Objects']
             prefix_list = []
             for i in prefixes:
                 prefix_list.append(i['Key'])
-            s3_prefix = bucket_name + S3AccessGrantsPlugin.__get_common_prefix_for_multiple_prefixes(prefix_list)
+            s3_prefix = bucket_name + self._get_common_prefix_for_multiple_prefixes(prefix_list)
             pass
         elif operation_name == 'CopyObject':
             destination_bucket_name = request.context['input_params']['Bucket']
@@ -74,7 +73,7 @@ class S3AccessGrantsPlugin:
             if source_bucket != destination_bucket_name:
                 raise IllegalArgumentException("Source bucket and destination bucket must be the same.")
             prefix_list = [source_split[1], request.context['input_params']['Key']]
-            s3_prefix = destination_bucket_name + S3AccessGrantsPlugin.__get_common_prefix_for_multiple_prefixes(prefix_list)
+            s3_prefix = destination_bucket_name + self._get_common_prefix_for_multiple_prefixes(prefix_list)
         else:
             s3_prefix = request.context['input_params']['Bucket']
             try:
@@ -83,8 +82,7 @@ class S3AccessGrantsPlugin:
                 pass
         return s3_prefix
 
-    @staticmethod
-    def __get_common_prefix_for_multiple_prefixes(prefixes):
+    def _get_common_prefix_for_multiple_prefixes(self, prefixes):
         if len(prefixes) == 0:
             return '/'
         common_ancestor = first_key = prefixes[0]
@@ -111,7 +109,7 @@ class S3AccessGrantsPlugin:
             return "/" + first_key
         return "/" + new_common_ancestor
 
-    def __get_s3_control_client_for_region(self, bucket_name):
+    def _get_s3_control_client_for_region(self, bucket_name):
         region = self.bucket_region_cache.resolve(self.internal_s3_client, bucket_name)
         s3_control_client = self.client_dict.get(region)
         if s3_control_client is None:
@@ -119,7 +117,7 @@ class S3AccessGrantsPlugin:
             self.client_dict[region] = s3_control_client
         return s3_control_client
 
-    def __get_value_from_cache(self, cache_key, s3_control_client, requester_account_id):
+    def _get_value_from_cache(self, cache_key, s3_control_client, requester_account_id):
         access_denied_exception = self.access_denied_cache.get_value_from_cache(cache_key)
         if access_denied_exception is not None:
             logging.debug("Found cached Access Denied Exception.")
