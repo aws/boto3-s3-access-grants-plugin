@@ -33,7 +33,7 @@ class AccessGrantsCache:
         self.access_grants_cache = Cache(maxsize=self.cache_size, ttl=self.cache_ttl)
 
     #  This is for grants of type "s3://bucket/prefix/*"
-    def __search_credentials_at_prefix_level(self, cache_key):
+    def _search_credentials_at_prefix_level(self, cache_key):
 
         prefix = cache_key.s3_prefix
         while prefix != "s3:":
@@ -46,7 +46,7 @@ class AccessGrantsCache:
         return None
 
     # This is for grants of type "s3://bucket/prefix*"
-    def __search_credentials_at_character_level(self, cache_key):
+    def _search_credentials_at_character_level(self, cache_key):
         prefix = cache_key.s3_prefix
         while prefix != "s3://":
             cache_key = CacheKey(cache_key=cache_key, s3_prefix=prefix + "*")
@@ -57,7 +57,7 @@ class AccessGrantsCache:
             prefix = prefix[:-1]
         return None
 
-    def __get_credentials_from_service(self, s3_control_client, cache_key, account_id):
+    def _get_credentials_from_service(self, s3_control_client, cache_key, account_id):
         if s3_control_client is None:
             raise IllegalArgumentException("S3 Control Client should not be null")
         bucket_owner_account_id = self.account_id_resolver_cache.resolve(s3_control_client, account_id,
@@ -70,34 +70,33 @@ class AccessGrantsCache:
 
     # This method removes '/*' from matchedGrantTarget if present.
     # This helps us differentiate between grants of type "s3://bucket/prefix/*" and "s3://bucket/prefix*".
-    @staticmethod
-    def __process_matched_target(matched_grant_target):
+    def _process_matched_target(self, matched_grant_target):
         if matched_grant_target.endswith("/*"):
             return matched_grant_target[:-2]
         return matched_grant_target
 
     def get_credentials(self, s3_control_client, cache_key, account_id, access_denied_cache):
         logging.debug("Fetching credentials from Access Grants for s3Prefix: " + cache_key.s3_prefix)
-        credentials = self.__search_credentials_at_prefix_level(cache_key)
+        credentials = self._search_credentials_at_prefix_level(cache_key)
         if credentials is None and (cache_key.permission == "READ" or cache_key.permission == "WRITE"):
-            credentials = self.__search_credentials_at_prefix_level(
+            credentials = self._search_credentials_at_prefix_level(
                 CacheKey(permission="READWRITE", cache_key=cache_key))
         if credentials is None:
-            credentials = self.__search_credentials_at_character_level(cache_key)
+            credentials = self._search_credentials_at_character_level(cache_key)
         if credentials is None and (cache_key.permission == "READ" or cache_key.permission == "WRITE"):
-            credentials = self.__search_credentials_at_character_level(
+            credentials = self._search_credentials_at_character_level(
                 CacheKey(permission="READWRITE", cache_key=cache_key))
         if credentials is None:
             logging.debug("Credentials not available in the cache. Fetching credentials from Access Grants service.")
             try:
-                response = self.__get_credentials_from_service(s3_control_client, cache_key, account_id)
+                response = self._get_credentials_from_service(s3_control_client, cache_key, account_id)
                 credentials = response["Credentials"]
                 matched_grant_target = response["MatchedGrantTarget"]
                 if matched_grant_target.endswith("*"):  # we do not cache object level grants
                     logging.debug("Caching the credentials for s3Prefix:" + matched_grant_target
                                   + " and permission: " + cache_key.permission)
                     self.access_grants_cache.set(
-                        CacheKey(s3_prefix=AccessGrantsCache.__process_matched_target(matched_grant_target),
+                        CacheKey(s3_prefix=self._process_matched_target(matched_grant_target),
                                  cache_key=cache_key), credentials)
                 logging.debug("Successfully retrieved credentials from Access Grants service.")
             except ClientError as e:
@@ -110,8 +109,8 @@ class AccessGrantsCache:
                 raise e
         return credentials
 
-    def __put_value_in_cache(self, cache_key, value):
+    def _put_value_in_cache(self, cache_key, value):
         return self.access_grants_cache.set(cache_key, value)
 
-    def __get_value_from_cache(self, cache_key):
+    def _get_value_from_cache(self, cache_key):
         return self.access_grants_cache.get(cache_key)

@@ -17,8 +17,7 @@ class BucketRegionResolverCache:
 
         self.bucket_region_resolver_cache = Cache(maxsize=self.cache_size, ttl=self.cache_ttl)
 
-    @staticmethod
-    def __resolve_from_service(s3_client, bucket):
+    def _resolve_from_service(self, s3_client, bucket):
         try:
             head_bucket_response = s3_client.head_bucket(Bucket=bucket)
             resolved_region = head_bucket_response['BucketRegion']
@@ -38,6 +37,6 @@ class BucketRegionResolverCache:
         bucket_region = self.bucket_region_resolver_cache.get(bucket)
         if bucket_region is None:
             logging.debug(f"Region for bucket \"{bucket}\" not available in cache. Fetching region from service")
-            bucket_region = BucketRegionResolverCache.__resolve_from_service(s3_client, bucket)
+            bucket_region = self._resolve_from_service(s3_client, bucket)
             self.bucket_region_resolver_cache.set(bucket, bucket_region)
         return bucket_region

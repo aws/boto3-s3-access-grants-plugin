@@ -18,7 +18,7 @@ class TestAccountIdResolverCache(unittest.TestCase):
                          "987654321098")
 
     # test to check if service call is made only once for every resolve call with the same bucket name
-    @mock.patch('aws_s3_access_grants_boto3_plugin.cache.account_id_resolver_cache.AccountIdResolverCache._AccountIdResolverCache__resolve_from_service')
+    @mock.patch('aws_s3_access_grants_boto3_plugin.cache.account_id_resolver_cache.AccountIdResolverCache._resolve_from_service')
     def test_count_resolve_method(self, mocked_resolve_from_service):
         cache = AccountIdResolverCache()
         cache.resolve(self.mock_s3_control_client, "123456789012", "s3://bucketName/prefixA")
@@ -33,13 +33,13 @@ class TestAccountIdResolverCache(unittest.TestCase):
             'AccessGrantsInstanceId': 'abcdefghijklmnopqrstuvwxyz'
         }
         self.assertEqual(
-            cache._AccountIdResolverCache__resolve_from_service(self.mock_s3_control_client, "123456789012", "s3://bucketName/prefixA"),
+            cache._resolve_from_service(self.mock_s3_control_client, "123456789012", "s3://bucketName/prefixA"),
             "987654321098")
 
     # test to check if get_bucket_name method returns expected bucket name for s3 prefix
     def test_get_bucket_name(self):
         cache = AccountIdResolverCache()
-        self.assertEqual(cache._AccountIdResolverCache__get_bucket_name("s3://bucketName/prefixA"), "bucketName")
+        self.assertEqual(cache._get_bucket_name("s3://bucketName/prefixA"), "bucketName")
 
     # test to check if init method of AccountIdResolverCache throws IllegalArgumentException for invalid cache size
     def test_cache_creation_with_invalid_cache_size(self):

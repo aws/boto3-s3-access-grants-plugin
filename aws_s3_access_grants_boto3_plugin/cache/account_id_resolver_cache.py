@@ -25,22 +25,20 @@ class AccountIdResolverCache:
 
         self.account_id_resolver_cache = Cache(maxsize=self.cache_size, ttl=cache_ttl)
 
-    @staticmethod
-    def __get_bucket_name(s3_prefix):
+    def _get_bucket_name(self, s3_prefix):
         split_prefix = s3_prefix.split("/")
         return split_prefix[2]
 
-    @staticmethod
-    def __resolve_from_service(s3_control_client, account_id, s3_prefix):
+    def _resolve_from_service(self, s3_control_client, account_id, s3_prefix):
         access_grants_instance_for_prefix = s3_control_client.get_access_grants_instance_for_prefix(
             AccountId=account_id, S3Prefix=s3_prefix)
         access_grants_instance_arn = access_grants_instance_for_prefix['AccessGrantsInstanceArn']
         return access_grants_instance_arn.split(":")[4]
 
     def resolve(self, s3_control_client, requester_account_id, s3_prefix):
-        bucket_name = AccountIdResolverCache.__get_bucket_name(s3_prefix)
+        bucket_name = self._get_bucket_name(s3_prefix)
         account_id = self.account_id_resolver_cache.get(bucket_name)
         if account_id is None:
-            account_id = AccountIdResolverCache.__resolve_from_service(s3_control_client, requester_account_id, s3_prefix)
+            account_id = self._resolve_from_service(s3_control_client, requester_account_id, s3_prefix)
             self.account_id_resolver_cache.set(bucket_name, account_id)
         return account_id
