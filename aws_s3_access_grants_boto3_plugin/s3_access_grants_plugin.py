@@ -1,4 +1,3 @@
-import boto3
 import botocore
 from botocore import session
 from botocore import config
@@ -26,14 +25,12 @@ class S3AccessGrantsPlugin:
             self.session = customer_session
             self.sts_client = self.session.create_client('sts')
             self.internal_s3_client = self.session.create_client('s3')
-        elif isinstance(customer_session, boto3.session.Session):
-            self.session = customer_session
-            self.sts_client = self.session.client('sts')
-            self.internal_s3_client = self.session.client('s3')
-        if customer_session is None:  # Customer has not set session explicitly, so we use default botocore session
+        elif customer_session is None:  # Customer has not set session explicitly, so we use default botocore session
             self.session = botocore.session.get_session()
             self.sts_client = self.session.create_client('sts')
             self.internal_s3_client = self.session.create_client('s3')
+        else:
+            raise IllegalArgumentException("customer_session must be type of botocore.session")
 
     def register(self):
         self.s3_client.meta.events.register(
@@ -133,11 +130,8 @@ class S3AccessGrantsPlugin:
         region = self.bucket_region_cache.resolve(self.internal_s3_client, bucket_name)
         s3_control_client = self.client_dict.get(region)
         if s3_control_client is None:
-            if isinstance(self.session, botocore.session.Session):
-                s3_control_client = self.session.create_client('s3control', region_name=region,
-                                                               config=self.session_config)
-            elif isinstance(self.session, boto3.session.Session):
-                s3_control_client = self.session.client('s3control', region_name=region, config=self.session_config)
+            s3_control_client = self.session.create_client('s3control', region_name=region,
+                                                           config=self.session_config)
             self.client_dict[region] = s3_control_client
         return s3_control_client
 

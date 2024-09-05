@@ -14,8 +14,7 @@ classifiers = [
 ]
 dependencies = [
     'cacheout>=0.16.0',
-    'botocore>=1.34.70',
-    'boto3>=1.34.0'
+    'botocore>=1.34.70'
 ]
 
 [project.urls]
