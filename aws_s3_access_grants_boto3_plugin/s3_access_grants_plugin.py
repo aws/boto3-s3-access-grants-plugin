@@ -1,5 +1,7 @@
 import botocore
 from botocore import session
+from botocore import config
+from botocore import credentials
 import logging
 from aws_s3_access_grants_boto3_plugin.cache.access_denied_cache import AccessDeniedCache
 from aws_s3_access_grants_boto3_plugin.cache.access_grants_cache import AccessGrantsCache
@@ -10,18 +12,26 @@ from aws_s3_access_grants_boto3_plugin.cache.bucket_region_resolver_cache import
 
 
 class S3AccessGrantsPlugin:
-    session = botocore.session.get_session()
     request = None
-    sts_client = session.create_client('sts')
     access_denied_cache = AccessDeniedCache()
     access_grants_cache = AccessGrantsCache()
     bucket_region_cache = BucketRegionResolverCache()
     client_dict = {}
-    internal_s3_client = session.create_client('s3')
+    session_config = botocore.config.Config(user_agent="aws_s3_access_grants_boto3_plugin")
 
-    def __init__(self, s3_client, fallback_enabled):
+    def __init__(self, s3_client, fallback_enabled, customer_session=None):
         self.s3_client = s3_client
         self.fallback_enabled = fallback_enabled
+        if isinstance(customer_session, botocore.session.Session):
+            self.session = customer_session
+            self.sts_client = self.session.create_client('sts', config=self.session_config)
+            self.internal_s3_client = self.session.create_client('s3', config=self.session_config)
+        elif customer_session is None:  # Customer has not set session explicitly, so we use default botocore session
+            self.session = botocore.session.get_session()
+            self.sts_client = self.session.create_client('sts', config=self.session_config)
+            self.internal_s3_client = self.session.create_client('s3', config=self.session_config)
+        else:
+            raise IllegalArgumentException("customer_session must be type of botocore.session")
 
     def register(self):
         self.s3_client.meta.events.register(
@@ -35,12 +45,14 @@ class S3AccessGrantsPlugin:
             s3_prefix = self._get_s3_prefix(operation_name, request)
             cache_key = CacheKey(permission=permission, credentials=requester_credentials,
                                  s3_prefix="s3://" + s3_prefix)
-            print("In-plugin"+self.sts_client.get_caller_identity()['Arn'])
             requester_account_id = self.sts_client.get_caller_identity()['Account']
             bucket_name = request.context['input_params']['Bucket']
             s3_control_client = self._get_s3_control_client_for_region(bucket_name)
-            request.context['signing']['credentials'] = self._get_value_from_cache(cache_key, s3_control_client,
-                                                                                    requester_account_id)
+            s3ag_credentials = self._get_value_from_cache(cache_key, s3_control_client, requester_account_id)
+            request.context['signing']['request_credentials'] = botocore.credentials.Credentials(access_key=s3ag_credentials['AccessKeyId'],
+                                                                                                 secret_key=s3ag_credentials['SecretAccessKey'],
+                                                                                                 token=s3ag_credentials['SessionToken'])
+
         except Exception as e:
             if self._should_fallback_to_default_credentials_for_this_case(e):
                 pass
@@ -74,6 +86,15 @@ class S3AccessGrantsPlugin:
                 raise IllegalArgumentException("Source bucket and destination bucket must be the same.")
             prefix_list = [source_split[1], request.context['input_params']['Key']]
             s3_prefix = destination_bucket_name + self._get_common_prefix_for_multiple_prefixes(prefix_list)
+        elif (operation_name == 'ListObjectsV2' or
+              operation_name == 'ListObjects' or
+              operation_name == 'ListObjectVersions' or
+              operation_name == 'ListMultipartUploads'):
+            s3_prefix = request.context['input_params']['Bucket']
+            try:
+                s3_prefix = s3_prefix + "/" + request.context['input_params']['Prefix']
+            except KeyError:
+                pass
         else:
             s3_prefix = request.context['input_params']['Bucket']
             try:
@@ -105,7 +126,7 @@ class S3AccessGrantsPlugin:
                     new_common_ancestor = common_ancestor + "/" + last_prefix
                 else:
                     break
-        if new_common_ancestor == first_key+"/":
+        if new_common_ancestor == first_key + "/":
             return "/" + first_key
         return "/" + new_common_ancestor
 
@@ -113,7 +134,8 @@ class S3AccessGrantsPlugin:
         region = self.bucket_region_cache.resolve(self.internal_s3_client, bucket_name)
         s3_control_client = self.client_dict.get(region)
         if s3_control_client is None:
-            s3_control_client = self.session.create_client('s3control', region_name=region)
+            s3_control_client = self.session.create_client('s3control', region_name=region,
+                                                           config=self.session_config)
             self.client_dict[region] = s3_control_client
         return s3_control_client
 
