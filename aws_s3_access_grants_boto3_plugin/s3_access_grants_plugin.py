@@ -1,6 +1,7 @@
 import botocore
 from botocore import session
 from botocore import config
+from botocore import credentials
 import logging
 from aws_s3_access_grants_boto3_plugin.cache.access_denied_cache import AccessDeniedCache
 from aws_s3_access_grants_boto3_plugin.cache.access_grants_cache import AccessGrantsCache
@@ -23,12 +24,12 @@ class S3AccessGrantsPlugin:
         self.fallback_enabled = fallback_enabled
         if isinstance(customer_session, botocore.session.Session):
             self.session = customer_session
-            self.sts_client = self.session.create_client('sts')
-            self.internal_s3_client = self.session.create_client('s3')
+            self.sts_client = self.session.create_client('sts', config=self.session_config)
+            self.internal_s3_client = self.session.create_client('s3', config=self.session_config)
         elif customer_session is None:  # Customer has not set session explicitly, so we use default botocore session
             self.session = botocore.session.get_session()
-            self.sts_client = self.session.create_client('sts')
-            self.internal_s3_client = self.session.create_client('s3')
+            self.sts_client = self.session.create_client('sts', config=self.session_config)
+            self.internal_s3_client = self.session.create_client('s3', config=self.session_config)
         else:
             raise IllegalArgumentException("customer_session must be type of botocore.session")
 
@@ -47,8 +48,11 @@ class S3AccessGrantsPlugin:
             requester_account_id = self.sts_client.get_caller_identity()['Account']
             bucket_name = request.context['input_params']['Bucket']
             s3_control_client = self._get_s3_control_client_for_region(bucket_name)
-            request.context['signing']['credentials'] = self._get_value_from_cache(cache_key, s3_control_client,
-                                                                                   requester_account_id)
+            s3ag_credentials = self._get_value_from_cache(cache_key, s3_control_client, requester_account_id)
+            request.context['signing']['request_credentials'] = botocore.credentials.Credentials(access_key=s3ag_credentials['AccessKeyId'],
+                                                                                                 secret_key=s3ag_credentials['SecretAccessKey'],
+                                                                                                 token=s3ag_credentials['SessionToken'])
+
         except Exception as e:
             if self._should_fallback_to_default_credentials_for_this_case(e):
                 pass
