@@ -1,3 +1,8 @@
+## 1.2.0 2024-09-20
+### Features
+* Increased the account_id_resolver_cache and bucket_region_resolver_cache ttl to 1 hour
+---
+
 ## 1.1.0 2024-09-04
 ### Features
 * You can now pass a session while initiating the plugin. That session will be used to create s3, sts, and s3control clients internally.
