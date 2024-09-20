@@ -2,7 +2,7 @@ from cacheout import Cache
 from aws_s3_access_grants_boto3_plugin.exceptions import IllegalArgumentException
 
 DEFAULT_ACCOUNT_ID_CACHE_SIZE = 1000
-DEFAULT_TTL = 600
+DEFAULT_TTL = 60 * 60
 MAX_LIMIT_ACCOUNT_ID_CACHE_SIZE = 1000000
 MAX_LIMIT_TTL = 2592000
 

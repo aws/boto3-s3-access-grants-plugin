@@ -1,6 +1,6 @@
-## AWS S3 Access Grants plugin for boto3
+## Amazon S3 Access Grants plugin for boto3
 
-AWS S3 Access Grants Plugin provides the functionality to enable S3 customers to configure S3 ACCESS GRANTS as a permission layer on top of the S3 Clients.
+Amazon S3 Access Grants Plugin provides the functionality to enable S3 customers to configure S3 ACCESS GRANTS as a permission layer on top of the S3 Clients.
 
 S3 Access Grants is a feature from S3 that allows its customers to configure fine-grained access permissions for the data in their buckets.
 

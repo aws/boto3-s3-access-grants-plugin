@@ -3,7 +3,7 @@ from botocore.exceptions import ClientError
 import logging
 
 DEFAULT_BUCKET_REGION_CACHE_SIZE = 1000
-DEFAULT_BUCKET_REGION_CACHE_TTL = 5 * 60  # 5 minutes
+DEFAULT_BUCKET_REGION_CACHE_TTL = 60 * 60  # 1 hour
 
 
 class BucketRegionResolverCache:

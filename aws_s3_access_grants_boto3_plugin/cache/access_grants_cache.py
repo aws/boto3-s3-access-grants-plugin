@@ -26,9 +26,9 @@ class AccessGrantsCache:
             raise IllegalArgumentException(
                 "Max cache size should be less than or equal to " + str(MAX_LIMIT_ACCESS_GRANTS_CACHE_SIZE))
 
-        if self.duration > GET_DATA_ACCESS_DURATION:
+        if self.duration > MAX_GET_DATA_ACCESS_DURATION:
             raise IllegalArgumentException("Maximum duration should be less than or equal to " + str(
-                GET_DATA_ACCESS_DURATION))
+                MAX_GET_DATA_ACCESS_DURATION))
 
         self.access_grants_cache = Cache(maxsize=self.cache_size, ttl=self.cache_ttl)
 
