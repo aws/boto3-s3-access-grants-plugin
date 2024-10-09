@@ -35,10 +35,16 @@ class S3AccessGrantsPlugin:
 
     def register(self):
         self.s3_client.meta.events.register(
-            'before-sign.s3', self._get_access_grants_credentials
+            'before-sign.s3', self.get_access_grants_credentials
         )
 
-    def _get_access_grants_credentials(self, operation_name, request, **kwargs):
+    def botocore_initialize(self, s3_client):
+        plugin = S3AccessGrantsPlugin(s3_client, fallback_enabled=True)
+        session.get_session().register(
+            'before-sign.s3', plugin.get_access_grants_credentials
+        )
+
+    def get_access_grants_credentials(self, operation_name, request, **kwargs):
         requester_credentials = self.s3_client._get_credentials()
         try:
             permission = get_permission_for_s3_operation(operation_name)
