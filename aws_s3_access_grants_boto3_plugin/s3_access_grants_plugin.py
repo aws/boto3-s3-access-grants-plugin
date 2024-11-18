@@ -17,7 +17,7 @@ class S3AccessGrantsPlugin:
     access_grants_cache = AccessGrantsCache()
     bucket_region_cache = BucketRegionResolverCache()
     client_dict = {}
-    session_config = botocore.config.Config(user_agent="aws_s3_access_grants_boto3_plugin")
+    session_config = botocore.config.Config(user_agent="aws_s3_access_grants_boto3_plugin", botocore_client_plugins={})
 
     def __init__(self, s3_client, fallback_enabled, customer_session=None):
         self.s3_client = s3_client
@@ -38,9 +38,9 @@ class S3AccessGrantsPlugin:
             'before-sign.s3', self.get_access_grants_credentials
         )
 
-    def botocore_initialize(self, s3_client):
+    def load_client_plugins(self, s3_client):
         plugin = S3AccessGrantsPlugin(s3_client, fallback_enabled=True)
-        session.get_session().register(
+        s3_client.meta.events.register(
             'before-sign.s3', plugin.get_access_grants_credentials
         )
 
