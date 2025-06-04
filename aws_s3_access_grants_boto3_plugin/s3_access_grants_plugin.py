@@ -10,6 +10,11 @@ from aws_s3_access_grants_boto3_plugin.exceptions import IllegalArgumentExceptio
 from aws_s3_access_grants_boto3_plugin.operation_permissions import get_permission_for_s3_operation
 from aws_s3_access_grants_boto3_plugin.cache.bucket_region_resolver_cache import BucketRegionResolverCache
 
+def initialize_client_plugin(s3_client):
+    plugin = S3AccessGrantsPlugin(s3_client, fallback_enabled=True)
+    s3_client.meta.events.register(
+        'before-sign.s3', plugin.get_access_grants_credentials
+    )
 
 class S3AccessGrantsPlugin:
     request = None
@@ -17,7 +22,7 @@ class S3AccessGrantsPlugin:
     access_grants_cache = AccessGrantsCache()
     bucket_region_cache = BucketRegionResolverCache()
     client_dict = {}
-    session_config = botocore.config.Config(user_agent="aws_s3_access_grants_boto3_plugin")
+    session_config = botocore.config.Config(user_agent="aws_s3_access_grants_boto3_plugin", botocore_client_plugins={})
 
     def __init__(self, s3_client, fallback_enabled, customer_session=None):
         self.s3_client = s3_client
@@ -35,10 +40,10 @@ class S3AccessGrantsPlugin:
 
     def register(self):
         self.s3_client.meta.events.register(
-            'before-sign.s3', self._get_access_grants_credentials
+            'before-sign.s3', self.get_access_grants_credentials
         )
 
-    def _get_access_grants_credentials(self, operation_name, request, **kwargs):
+    def get_access_grants_credentials(self, operation_name, request, **kwargs):
         requester_credentials = self.s3_client._get_credentials()
         try:
             permission = get_permission_for_s3_operation(operation_name)
