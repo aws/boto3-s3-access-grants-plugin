@@ -11,7 +11,14 @@ from aws_s3_access_grants_boto3_plugin.operation_permissions import get_permissi
 from aws_s3_access_grants_boto3_plugin.cache.bucket_region_resolver_cache import BucketRegionResolverCache
 
 
-class S3AccessGrantsPlugin:
+def awscli_initialize(event_handlers):
+    session = botocore.session.get_session()
+    s3_client = session.create_client('s3')
+    plugin = S3AccessGrantsPlugin(s3_client, fallback_enabled=True)
+
+    event_handlers.register('before-sign.s3', plugin._get_access_grants_credentials)
+
+class S3AccessGrantsPlugin():
     request = None
     access_denied_cache = AccessDeniedCache()
     access_grants_cache = AccessGrantsCache()
@@ -39,19 +46,32 @@ class S3AccessGrantsPlugin:
         )
 
     def _get_access_grants_credentials(self, operation_name, request, **kwargs):
-        requester_credentials = self.s3_client._get_credentials()
+        if 'input_params' in request.context:
+            input_params = request.context['input_params']
+        else:
+            input_params = request.context['s3_redirect']['params']
+
+        requester_credentials = self.session.get_credentials()
         try:
             permission = get_permission_for_s3_operation(operation_name)
-            s3_prefix = self._get_s3_prefix(operation_name, request)
+            s3_prefix = self._get_s3_prefix(operation_name, request, input_params)
             cache_key = CacheKey(permission=permission, credentials=requester_credentials,
                                  s3_prefix="s3://" + s3_prefix)
             requester_account_id = self.sts_client.get_caller_identity()['Account']
-            bucket_name = request.context['input_params']['Bucket']
+            bucket_name = input_params['Bucket']
             s3_control_client = self._get_s3_control_client_for_region(bucket_name)
             s3ag_credentials = self._get_value_from_cache(cache_key, s3_control_client, requester_account_id)
-            request.context['signing']['request_credentials'] = botocore.credentials.Credentials(access_key=s3ag_credentials['AccessKeyId'],
-                                                                                                 secret_key=s3ag_credentials['SecretAccessKey'],
-                                                                                                 token=s3ag_credentials['SessionToken'])
+
+            credentials = botocore.credentials.Credentials(
+                access_key=s3ag_credentials['AccessKeyId'],
+                secret_key=s3ag_credentials['SecretAccessKey'],
+                token=s3ag_credentials['SessionToken']
+            )
+            request.context['signing']['request_credentials'] = credentials
+
+            # Also update the request_signer if present, required for CLI use case
+            if 'request_signer' in kwargs:
+                kwargs['request_signer']._credentials = credentials
 
         except Exception as e:
             if self._should_fallback_to_default_credentials_for_this_case(e):
@@ -69,22 +89,22 @@ class S3AccessGrantsPlugin:
             return True
         return False
 
-    def _get_s3_prefix(self, operation_name, request):
+    def _get_s3_prefix(self, operation_name, request, input_params):
         if operation_name == 'DeleteObjects':
-            bucket_name = request.context['input_params']['Bucket']
-            prefixes = request.context['input_params']['Delete']['Objects']
+            bucket_name = input_params['Bucket']
+            prefixes = input_params['Delete']['Objects']
             prefix_list = []
             for i in prefixes:
                 prefix_list.append(i['Key'])
             s3_prefix = bucket_name + self._get_common_prefix_for_multiple_prefixes(prefix_list)
             pass
         elif operation_name == 'CopyObject':
-            destination_bucket_name = request.context['input_params']['Bucket']
+            destination_bucket_name = input_params['Bucket']
             source_split = request.context['s3_redirect']['params']['CopySource'].split('/', 1)
             source_bucket = source_split[0]
             if source_bucket != destination_bucket_name:
                 raise IllegalArgumentException("Source bucket and destination bucket must be the same.")
-            prefix_list = [source_split[1], request.context['input_params']['Key']]
+            prefix_list = [source_split[1], input_params['Key']]
             s3_prefix = destination_bucket_name + self._get_common_prefix_for_multiple_prefixes(prefix_list)
         elif (operation_name == 'ListObjectsV2' or
               operation_name == 'ListObjects' or
@@ -92,13 +112,13 @@ class S3AccessGrantsPlugin:
               operation_name == 'ListMultipartUploads'):
             s3_prefix = request.context['input_params']['Bucket']
             try:
-                s3_prefix = s3_prefix + "/" + request.context['input_params']['Prefix']
+                s3_prefix = s3_prefix + "/" + input_params['Prefix']
             except KeyError:
                 pass
         else:
-            s3_prefix = request.context['input_params']['Bucket']
+            s3_prefix = input_params['Bucket']
             try:
-                s3_prefix = s3_prefix + "/" + request.context['input_params']['Key']
+                s3_prefix = s3_prefix + "/" + input_params['Key']
             except KeyError:
                 pass
         return s3_prefix
