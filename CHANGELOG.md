@@ -1,3 +1,11 @@
+## 1.3.0 2025-07-23
+### Features
+* Bumping up the minimum python language and dependency requirements for the plugin
+* fallback_enabled setting can now be passed via environment variables
+* Added a new initialization method to simplify the plugin creation and registry 
+---
+
+
 ## 1.2.0 2024-09-20
 ### Features
 * Increased the account_id_resolver_cache and bucket_region_resolver_cache ttl to 1 hour
