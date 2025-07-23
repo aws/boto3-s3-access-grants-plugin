@@ -3,10 +3,10 @@ import os
 from datetime import datetime
 from unittest.mock import patch
 import mock
-from botocore import credentials
+from botocore import credentials, session
 from aws_s3_access_grants_boto3_plugin.cache.cache_key import CacheKey
-from aws_s3_access_grants_boto3_plugin.exceptions import UnsupportedOperationError,IllegalArgumentException
-from aws_s3_access_grants_boto3_plugin.s3_access_grants_plugin import S3AccessGrantsPlugin
+from aws_s3_access_grants_boto3_plugin.exceptions import UnsupportedOperationError, IllegalArgumentException
+from aws_s3_access_grants_boto3_plugin.s3_access_grants_plugin import S3AccessGrantsPlugin, initialize_client_plugin, is_valid_boto3_s3_client
 
 
 class TestS3AccessGrantsPlugin(unittest.TestCase):
@@ -82,24 +82,30 @@ class TestS3AccessGrantsPlugin(unittest.TestCase):
         plugin._get_s3_control_client_for_region("bucket-name")
         self.assertTrue(plugin.client_dict.__contains__('us-east-1'))
 
-    def test_initializing_plugin_with_non_s3_client_throws_exception(self):
-        client = mock.Mock()
-        with self.assertRaises(IllegalArgumentException):
-            S3AccessGrantsPlugin(client)
+    def test_initializing_plugin_with_non_s3_client_does_not_throw_exception(self):
+        client = session.get_session().create_client('dynamodb')
+        initialize_client_plugin(client)
+
+    def test_is_valid_s3_client_returns_false_for_non_s3_clients(self):
+        client = session.get_session().create_client('dynamodb')
+        self.assertFalse(is_valid_boto3_s3_client(client))
+
+    def test_is_valid_s3_client_returns_true_for_s3_clients(self):
+        client = session.get_session().create_client('s3')
+        self.assertTrue(is_valid_boto3_s3_client(client))
+
+    @patch('aws_s3_access_grants_boto3_plugin.s3_access_grants_plugin.S3AccessGrantsPlugin')
+    def test_initializing_plugin_with_non_s3_client_does_not_throw_exception(self, mock_plugin_class):
+        s3_client = session.get_session().create_client('s3')
+        mock_plugin_instance = mock.Mock()
+        mock_plugin_class.return_value = mock_plugin_instance
+
+        initialize_client_plugin(s3_client)
+
+        mock_plugin_class.assert_called_once_with(s3_client, fallback_enabled=True)
+        mock_plugin_instance.register.assert_called_once()
 
     def test_initializing_plugin_with_no_fallback_defaults_to_true(self):
         s3_client = self._create_mock_s3_client()
         plugin = S3AccessGrantsPlugin(s3_client)
         self.assertTrue(plugin.fallback_enabled)
-
-    @patch.dict(os.environ, {"S3_ACCESS_GRANTS_FALLBACK_ENABLED": "True"})
-    def test_initializing_plugin_with_no_fallback_input_reads_from_environ_variables(self):
-        s3_client = self._create_mock_s3_client()
-        plugin = S3AccessGrantsPlugin(s3_client)
-        self.assertTrue(plugin.fallback_enabled)
-
-    @patch.dict(os.environ, {"S3_ACCESS_GRANTS_FALLBACK_ENABLED": "Invalid"})
-    def test_initializing_plugin_with_invalid_fallback_value_in_environ_variables_throws_exception(self):
-        s3_client = self._create_mock_s3_client()
-        with self.assertRaises(IllegalArgumentException):
-            S3AccessGrantsPlugin(s3_client)

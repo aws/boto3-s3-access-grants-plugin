@@ -2,7 +2,6 @@
 ### Features
 * Bumping up the minimum python language and dependency requirements for the plugin
 * fallback_enabled setting can now be passed via environment variables
-* Added a new initialization method to simplify the plugin creation and registry 
 ---
 
 
