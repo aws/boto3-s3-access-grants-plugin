@@ -30,11 +30,15 @@ fallback_enabled takes in a boolean value. This option decides if we will fall b
 1. If fallback_enabled is set to True then we will fall back every time we are not able to get the credentials from Access Grants, no matter the reason.
 2. If fallback_enabled option is set to False we will fall back only in case the operation/API is not supported by Access Grants.
 
+Note that fallback_enabled can either be passed while creating the plugin (as showed in example above) or can be passed by setting the os environment variable S3_ACCESS_GRANTS_FALLBACK_ENABLED. We only accept boolean inputs for the fallback option anything else will be generating an IllegalArgumentException.
+If fallback_enabled is not set, we will be defaulting to True.
+
 customer_session is an optional parameter of type botocore.session.Session. This session will be used to create the internal sts, s3, and s3control clients. If no session is passed the default botocore session will be used to create these clients.
 
 ### Notes
 * The plugin supports delete_objects API and copy_object API which S3 Access Grants does not implicitly support. For these APIs we get the common prefix of all the object keys and find their common ancestor. If you  have a grant present on the common ancestor, you will get Access Grants credentials based on that grant.
 For copy_object API the source and destination buckets should be same, since a grant cannot give access to multiple buckets.
+* The plugin's support for a specific python version is inline with the minimum python version requirements of botocore. This is to ensure that our customers are always getting the latest security and feature updates of botocore.
 
 ---
 ### Contributions

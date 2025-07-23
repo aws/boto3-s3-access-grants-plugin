@@ -8,7 +8,7 @@ from botocore.exceptions import ClientError
 
 
 class SetupIntegrationTests:
-    test_account = ""   # Set your account number here
+    test_account = "020383678445"   # Set your account number here
     iam_role_name = 'aws-s3-access-grants-sdk-plugin-integration-role'
     iam_client = boto3.client('iam')
     region = 'us-west-1'
@@ -260,4 +260,3 @@ class SetupIntegrationTests:
             self.iam_client.delete_policy(PolicyArn=policy_arn)
         except ClientError as e:
             logging.debug("Error while deleting IAM policy." + e.response['Error']['Message'])
-
