@@ -21,15 +21,9 @@ class S3AccessGrantsPlugin:
     client_dict = {}
     session_config = botocore.config.Config(user_agent="aws_s3_access_grants_boto3_plugin")
 
-    def __init__(self, s3_client, fallback_enabled=None, customer_session=None):
-
+    def __init__(self, s3_client, fallback_enabled=True, customer_session=None):
         self.s3_client = s3_client
-
-        # Handle fallback_enabled parameter with environment variable fallback
-        if fallback_enabled is not None:
-            self.fallback_enabled = fallback_enabled
-        else:
-            self.fallback_enabled = True
+        self.fallback_enabled = fallback_enabled
 
         if isinstance(customer_session, botocore.session.Session):
             self.session = customer_session

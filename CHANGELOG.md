@@ -4,7 +4,6 @@
 * fallback_enabled setting can now be passed via environment variables
 ---
 
-
 ## 1.2.0 2024-09-20
 ### Features
 * Increased the account_id_resolver_cache and bucket_region_resolver_cache ttl to 1 hour
