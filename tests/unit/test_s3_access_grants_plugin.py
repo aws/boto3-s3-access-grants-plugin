@@ -105,7 +105,7 @@ class TestS3AccessGrantsPlugin(unittest.TestCase):
         mock_plugin_class.assert_called_once_with(s3_client, fallback_enabled=True)
         mock_plugin_instance.register.assert_called_once()
 
-    def test_initializing_plugin_with_no_fallback_defaults_to_true(self):
+    def test_initializing_plugin_with_no_fallback_defaults_to_false(self):
         s3_client = self._create_mock_s3_client()
         plugin = S3AccessGrantsPlugin(s3_client)
-        self.assertTrue(plugin.fallback_enabled)
+        self.assertFalse(plugin.fallback_enabled)
