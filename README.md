@@ -30,7 +30,7 @@ fallback_enabled takes in a boolean value. This option decides if we will fall b
 1. If fallback_enabled is set to True then we will fall back every time we are not able to get the credentials from Access Grants, no matter the reason.
 2. If fallback_enabled option is set to False we will fall back only in case the operation/API is not supported by Access Grants.
 
-Note that fallback_enabled can be passed while creating the plugin (as showed in example above). If fallback_enabled is not set, we will be defaulting to True.
+Note that fallback_enabled can be passed while creating the plugin (as showed in example above). If fallback_enabled is not set, we will default to False.
 
 customer_session is an optional parameter of type botocore.session.Session. This session will be used to create the internal sts, s3, and s3control clients. If no session is passed the default botocore session will be used to create these clients.
 
