@@ -260,4 +260,3 @@ class SetupIntegrationTests:
             self.iam_client.delete_policy(PolicyArn=policy_arn)
         except ClientError as e:
             logging.debug("Error while deleting IAM policy." + e.response['Error']['Message'])
-

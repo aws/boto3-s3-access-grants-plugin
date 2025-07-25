@@ -2,7 +2,9 @@ import botocore
 from botocore import session
 from botocore import config
 from botocore import credentials
+from botocore.utils import create_nested_client
 import logging
+import os
 from aws_s3_access_grants_boto3_plugin.cache.access_denied_cache import AccessDeniedCache
 from aws_s3_access_grants_boto3_plugin.cache.access_grants_cache import AccessGrantsCache
 from aws_s3_access_grants_boto3_plugin.cache.cache_key import CacheKey
@@ -19,17 +21,18 @@ class S3AccessGrantsPlugin:
     client_dict = {}
     session_config = botocore.config.Config(user_agent="aws_s3_access_grants_boto3_plugin")
 
-    def __init__(self, s3_client, fallback_enabled, customer_session=None):
+    def __init__(self, s3_client, fallback_enabled=True, customer_session=None):
         self.s3_client = s3_client
         self.fallback_enabled = fallback_enabled
+
         if isinstance(customer_session, botocore.session.Session):
             self.session = customer_session
-            self.sts_client = self.session.create_client('sts', config=self.session_config)
-            self.internal_s3_client = self.session.create_client('s3', config=self.session_config)
+            self.sts_client = create_nested_client(self.session, 'sts', config=self.session_config)
+            self.internal_s3_client = create_nested_client(self.session, 's3', config=self.session_config)
         elif customer_session is None:  # Customer has not set session explicitly, so we use default botocore session
             self.session = botocore.session.get_session()
-            self.sts_client = self.session.create_client('sts', config=self.session_config)
-            self.internal_s3_client = self.session.create_client('s3', config=self.session_config)
+            self.sts_client = create_nested_client(self.session, 'sts', config=self.session_config)
+            self.internal_s3_client = create_nested_client(self.session, 's3', config=self.session_config)
         else:
             raise IllegalArgumentException("customer_session must be type of botocore.session")
 
@@ -134,7 +137,7 @@ class S3AccessGrantsPlugin:
         region = self.bucket_region_cache.resolve(self.internal_s3_client, bucket_name)
         s3_control_client = self.client_dict.get(region)
         if s3_control_client is None:
-            s3_control_client = self.session.create_client('s3control', region_name=region,
+            s3_control_client = create_nested_client(self.session, 's3control', region_name=region,
                                                            config=self.session_config)
             self.client_dict[region] = s3_control_client
         return s3_control_client
@@ -147,3 +150,29 @@ class S3AccessGrantsPlugin:
         return self.access_grants_cache.get_credentials(s3_control_client, cache_key,
                                                         requester_account_id,
                                                         self.access_denied_cache)
+
+
+def initialize_client_plugin(client):
+    """
+    Initialize and register the S3 Access Grants plugin for the given S3 client.
+    This method is considered internal and subject to abrupt breaking changes without prior notice.  Please do not use it directly.
+    """
+    if not is_valid_boto3_s3_client(client):
+        return
+    plugin = S3AccessGrantsPlugin(client, fallback_enabled=True)
+    plugin.register()
+
+def is_valid_boto3_s3_client(client):
+    """
+    Validates that the provided s3_client is a valid boto3 S3 client instance.
+
+    Args:
+        s3_client: The client to validate
+
+    Returns:
+        bool: True if valid boto3 S3 client, False otherwise
+    """
+    return (
+            isinstance(client, botocore.client.BaseClient)
+            and client.meta.service_model.service_id.lower() == "s3"
+        )
